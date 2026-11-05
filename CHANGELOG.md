@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.48.0](https://github.com/openai/openai-python/compare/v3.47.0...v3.48.0) (2026-11-05)
+
+
+### Features
+
+* **api:** add stream options for agent sessions ([#4251](https://github.com/openai/openai-python/issues/4251)) ([c6fc264](https://github.com/openai/openai-python/commit/c6fc264689d384d5caec150fafa1a9567c4a3f56))
+
 ## [3.47.0](https://github.com/openai/openai-python/compare/v3.46.0...v3.47.0) (2026-11-05)
 
 
