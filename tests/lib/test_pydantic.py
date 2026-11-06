@@ -409,3 +409,49 @@ def test_nested_inline_ref_expansion() -> None:
                 "additionalProperties": False,
             }
         )
+
+
+def test_generic_model_name_sanitization() -> None:
+    import re
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+
+    class Item(BaseModel):
+        title: str
+
+    class Page(BaseModel, Generic[T]):
+        items: list[T]
+
+    class Envelope(BaseModel, Generic[T]):
+        value: T
+
+    from openai.lib._tools import pydantic_responses_function_tool
+    from openai.lib._parsing._responses import type_to_text_format_param
+    from openai.lib._parsing._completions import type_to_response_format_param
+
+    models = [
+        Item,
+        Page[Item],
+        Envelope[Page[Item]],
+        Envelope[Envelope[Envelope[Envelope[Envelope[Envelope[Page[Item]]]]]]],
+    ]
+
+    for model in models:
+        chat_fmt = type_to_response_format_param(model)
+        assert chat_fmt["type"] == "json_schema"
+        chat_name = chat_fmt["json_schema"]["name"]
+        resp_name = type_to_text_format_param(model)["name"]
+        tool_name = openai.pydantic_function_tool(model)["function"]["name"]
+        resp_tool_name = pydantic_responses_function_tool(model)["name"]
+
+        for name in [chat_name, resp_name, tool_name, resp_tool_name]:
+            assert re.fullmatch(r"^[a-zA-Z0-9_-]{1,64}$", name), f"Name does not match pattern: {name}"
+            assert len(name) <= 64
+
+    # Explicit name preservation
+    explicit_tool = openai.pydantic_function_tool(Page[Item], name="CustomPageTool")["function"]["name"]
+    assert explicit_tool == "CustomPageTool"
+
+    explicit_resp_tool = pydantic_responses_function_tool(Page[Item], name="CustomRespTool")["name"]
+    assert explicit_resp_tool == "CustomRespTool"

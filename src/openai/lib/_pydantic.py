@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import inspect
 from typing import Any, TypeVar
 from typing_extensions import TypeGuard
@@ -153,3 +154,8 @@ def has_more_than_n_keys(obj: dict[str, object], n: int) -> bool:
         if i > n:
             return True
     return False
+
+
+def sanitize_model_name(name: str) -> str:
+    """Sanitize a class or model name to match the API name pattern ^[a-zA-Z0-9_-]{1,64}$."""
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", name)[:64]
